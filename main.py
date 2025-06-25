@@ -14,6 +14,9 @@ def get_wifi_data_for_prediction():
     if aps_df.empty or loc_df.empty:
         return None, None, None
 
+    if (aps_df['signal_dBm'] == 0).all():
+        return "Pastikan berada di Rektorat Sindangsari", None, None
+
     strongest_ap = aps_df.loc[aps_df['signal_dBm'].idxmax()]
     bssid = strongest_ap['bssid']
     signal = strongest_ap['signal_dBm']
@@ -60,12 +63,19 @@ if input_mode == "Otomatis (Wi-Fi Snapshot)":
                         input_dict[feature] = 0.0
 
                 input_df = pd.DataFrame([input_dict])[feature_names]
-                scaled_input = scaler.transform(input_df)
 
-                prediction = svm.predict(scaled_input)
-                st.success(f"📍 Prediksi Lantai: **{prediction[0]}**")
-                st.write("🔧 Fitur yang digunakan untuk prediksi:")
-                st.dataframe(input_df)
+                # ⬇️ Tambahan: cek semua nol
+                if (input_df == 0).all(axis=None):
+                    st.error(
+                        "Pastikan berada di Rektorat Sindangsari. "
+                        "Jika sudah di sana, silakan coba pindah lokasi."
+                    )
+                else:
+                    scaled_input = scaler.transform(input_df)
+                    prediction = svm.predict(scaled_input)
+                    st.success(f"📍 Prediksi Lantai: **{prediction[0]}**")
+                    st.write("🔧 Fitur yang digunakan untuk prediksi:")
+                    st.dataframe(input_df)
 
 else:
     st.header("✍️ Masukkan Nilai Fitur Secara Manual")
@@ -76,8 +86,16 @@ else:
 
     if st.button("🧮 Prediksi dari Input Manual"):
         input_df = pd.DataFrame([user_input], columns=feature_names)
-        scaled_input = scaler.transform(input_df)
-        prediction = svm.predict(scaled_input)
-        st.success(f"📍 Prediksi Lantai: **{prediction[0]}**")
-        st.write("🔧 Fitur yang digunakan untuk prediksi:")
-        st.dataframe(input_df)
+
+        # ⬇️ Tambahan: cek semua nol
+        if (input_df == 0).all(axis=None):
+            st.error(
+                "Pastikan berada di Rektorat Sindangsari. "
+                "Jika sudah di sana, silakan coba pindah lokasi."
+            )
+        else:
+            scaled_input = scaler.transform(input_df)
+            prediction = svm.predict(scaled_input)
+            st.success(f"📍 Prediksi Lantai: **{prediction[0]}**")
+            st.write("🔧 Fitur yang digunakan untuk prediksi:")
+            st.dataframe(input_df)

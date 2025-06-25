@@ -38,9 +38,49 @@ scaler.fit(df[feature_names])
 
 st.title("📡 Prediksi Tempat (Masih Terbatas pada Rektorat)")
 
-input_mode = st.radio("Pilih metode input data:", ["Otomatis (Wi-Fi Snapshot)", "Manual"])
+input_mode = st.radio(
+    "Pilih metode input data:",
+    ["Otomatis (Wi-Fi Snapshot)", "Manual", "Upload CSV"]  # ⬅️ baru
+)
 
-if input_mode == "Otomatis (Wi-Fi Snapshot)":
+if input_mode == "Upload CSV":
+    uploaded_file = st.file_uploader("📂 Unggah file CSV berisi nilai fitur", type=["csv"])
+    if uploaded_file is not None:
+        csv_df = pd.read_csv(uploaded_file, header=None)
+
+        if csv_df.shape[1] > 32:
+            csv_df = csv_df.drop(csv_df.columns[32], axis=1)
+
+        if csv_df.shape[0] == 1:
+            csv_df = csv_df.T
+
+        if csv_df.shape[0] != len(feature_names):
+            st.error(
+                f"Jumlah nilai ({csv_df.shape[0]}) ≠ jumlah fitur "
+                f"yang diharapkan ({len(feature_names)})."
+            )
+            st.stop()
+
+        csv_df.index = feature_names
+        csv_df = csv_df.T 
+
+        if (csv_df == 0).all(axis=None):
+            st.error(
+                "Pastikan berada di Rektorat Sindangsari. "
+                "Jika sudah di sana, silakan coba pindah lokasi."
+            )
+            st.stop()
+
+        scaled_input = scaler.transform(csv_df[feature_names])
+        preds = svm.predict(scaled_input)
+
+        for i, pred in enumerate(preds, start=1):
+            st.success(f"📍 Baris {i}: Prediksi Lantai → **{pred}**")
+
+        st.write("🔧 Fitur yang digunakan:")
+        st.dataframe(csv_df)
+
+elif input_mode == "Otomatis (Wi-Fi Snapshot)":
     if st.button("🔍 Ambil Snapshot & Prediksi"):
         with st.spinner("Memindai jaringan dan lokasi..."):
             result = get_wifi_data_for_prediction()

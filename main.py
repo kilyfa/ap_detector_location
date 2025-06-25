@@ -40,7 +40,7 @@ st.title("📡 Prediksi Tempat (Masih Terbatas pada Rektorat)")
 
 input_mode = st.radio(
     "Pilih metode input data:",
-    ["Otomatis (Wi-Fi Snapshot)", "Manual", "Upload CSV"]  # ⬅️ baru
+    ["Otomatis (Wi-Fi Snapshot)", "Manual", "Upload CSV"] 
 )
 
 if input_mode == "Upload CSV":
